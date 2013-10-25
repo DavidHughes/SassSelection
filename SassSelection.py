@@ -4,6 +4,7 @@ import re
 
 class SassSelectionCommand(sublime_plugin.TextCommand):
   def run(self, edit):
+    settings  = self.view.settings()
     selection = self.validate_selection()
 
     # TODO:
@@ -11,12 +12,18 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     # Traverse selector tree to root (i.e. no indent)
     # 'Compile' selector to true CSS
 
-    indent_count = self.calculate_indent_count(selection)
+    raw_indent = self.calculate_indent_count(selection)
 
-    estimated_tabs = len(indent_count) / 2
+    use_spaces = settings.get('translate_tabs_to_spaces')
+
+    indent_count = len(raw_indent)
+
+    if use_spaces:
+      tab_size = settings.get('tab_size', 4)
+      indent_count /= tab_size
 
     self.report_expiring_status('message', 'Indentation is this [%s] big (that\'s %s tabs)' %
-      (indent_count, estimated_tabs))
+      (raw_indent, indent_count))
 
   # Returns first selection region if it covers only one row
   def validate_selection(self):
