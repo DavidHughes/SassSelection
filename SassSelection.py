@@ -1,4 +1,6 @@
-import sublime, sublime_plugin
+import sublime
+import sublime_plugin
+import re
 
 class SassSelectionCommand(sublime_plugin.TextCommand):
   def run(self, edit):
@@ -9,7 +11,12 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     # Traverse selector tree to root (i.e. no indent)
     # 'Compile' selector to true CSS
 
-    self.report_expiring_status('message', 'Found: %s' % (self.view.substr(selection)))
+    indent_count = self.calculate_indent_count(selection)
+
+    estimated_tabs = len(indent_count) / 2
+
+    self.report_expiring_status('message', 'Indentation is this [%s] big (that\'s %s tabs)' %
+      (indent_count, estimated_tabs))
 
   # Returns first selection region if it covers only one row
   def validate_selection(self):
@@ -27,6 +34,12 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     else:
       self.report_expiring_status('error', 'Multi-row regions are not supported', 5000)
       raise Exception('Multi-row region was selected, logic for this not yet determined')
+
+  def calculate_indent_count(self, selection):
+    text = self.view.substr(selection)
+    full_indentation = re.search('^(\s*)', text).groups()[0]
+
+    return full_indentation
 
 
   def report_expiring_status(self, status_key, status_message, timeout=3000):
