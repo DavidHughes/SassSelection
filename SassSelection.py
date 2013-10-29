@@ -5,8 +5,8 @@ import re
 class SassSelectionCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     settings  = self.view.settings()
-    (selection, current_row_index) = self.validate_selection()
-    raw_indent = self.calculate_indent_count(selection)
+    (current_row, current_row_index) = self.validate_selection()
+    raw_indent = self.calculate_indent_count(current_row)
     use_spaces = settings.get('translate_tabs_to_spaces')
     indent_count = len(raw_indent)
     expected_indent_level = indent_count - 1
@@ -16,8 +16,7 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
       tab_size = settings.get('tab_size', 4)
       indent_count /= tab_size
 
-    self.report_expiring_status('message', 'Indentation is this [%s] big (that\'s %s tabs)' %
-      (raw_indent, indent_count))
+    self.report_expiring_status('message', 'Current selection: %s (row %s, [%s]{%d %s} indentation)' % (current_row, current_row_index, raw_indent, len(raw_indent), 'spaces' if use_spaces else 'tabs'))
 
     # TODO:
     # Find nearest SASS selector fragment
@@ -26,18 +25,18 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     nearest_sass_fragment = None
 
     # Traverse selector tree to root (i.e. no indent)
-    while (true) # while we have not found the top-level sass fragment
+    #while (true) # while we have not found the top-level sass fragment
       # look at the row above
-      current_row_index--
-      current_row = view_at[current_row_index] # obviously borked, find actual syntax
-      if (is_indented_at(expected_indent_level) && is_sass_fragment(current_row))
-        sass_fragments.push(row_at(current_row))
+      #current_row_index--
+      #current_row = view_at[current_row_index] # obviously borked, find actual syntax
+      #if (is_indented_at(expected_indent_level) && is_sass_fragment(current_row))
+      #  sass_fragments.push(row_at(current_row))
 
 
     # 'Compile' selector to true CSS
-    for (i = len(sass_fragments); i > 0; i--)
-      computed_css = sass_fragments.pop();
-      flatten_sass_syntax(computed_css);
+    #for (i = len(sass_fragments); i > 0; i--)
+    #  computed_css = sass_fragments.pop();
+    #  flatten_sass_syntax(computed_css);
 
 
   # Returns first selection region if it covers only one row
@@ -46,13 +45,13 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     if len(all_selections) != 1:
       self.report_expiring_message('warning', 'Multiple regions selected, using first')
 
-    first_region = all_selections[0]
+    current_row = self.view.line(all_selections[0])
 
-    (begin_row, begin_col) = self.view.rowcol(first_region.begin())
-    (end_row, end_col)     = self.view.rowcol(first_region.end())
+    (begin_row, begin_col) = self.view.rowcol(current_row.begin())
+    (end_row, end_col)     = self.view.rowcol(current_row.end())
 
     if begin_row == end_row:
-      return (first_region, begin_row)
+      return (current_row, begin_row)
     else:
       self.report_expiring_status('error', 'Multi-row regions are not supported', 5000)
       raise Exception('Multi-row region was selected, logic for this not yet determined')
