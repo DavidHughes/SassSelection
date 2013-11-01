@@ -16,7 +16,9 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
       tab_size = settings.get('tab_size', 4)
       indent_count /= tab_size
 
-    self.report_expiring_status('message', 'Current selection: %s (row %s, [%s]{%d %s} indentation)' % (current_row, current_row_index, raw_indent, len(raw_indent), 'spaces' if use_spaces else 'tabs'))
+    previous_line = sublime.Region(current_row.begin() - 1)
+
+    self.report_expiring_status('message', 'Previous line: %s' % self.view.substr(self.view.line(previous_line)))
 
     # TODO:
     # Find nearest SASS selector fragment
@@ -25,11 +27,9 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     nearest_sass_fragment = None
 
     # Traverse selector tree to root (i.e. no indent)
-    #while (true) # while we have not found the top-level sass fragment
-      # look at the row above
-      #current_row_index--
-      #current_row = view_at[current_row_index] # obviously borked, find actual syntax
-      #if (is_indented_at(expected_indent_level) && is_sass_fragment(current_row))
+    #while (is_still_searching())
+      #current_row = get_previous_row(current_row)
+      #if (is_indented_at(expected_indent_level, current_row) && is_sass_fragment(current_row))
       #  sass_fragments.push(row_at(current_row))
 
 
@@ -62,6 +62,12 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
 
     return full_indentation
 
+  # Gets the region for the line before the current line.
+  # This works by getting the region of the point BEFORE the current line begins (i.e. the previous line)
+  def get_previous_row(self, current_row):
+    one_char_before = sublime.Region(current_row.begin() - 1)
+
+    return self.view.line(one_char_before)
 
   def report_expiring_status(self, status_key, status_message, timeout=3000):
     self.view.set_status(status_key, status_message)
