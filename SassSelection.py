@@ -6,7 +6,7 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     settings  = self.view.settings()
     (current_row, current_row_index) = self.validate_selection()
-    raw_indent = self.calculate_indent_count(current_row)
+    raw_indent = self.calculate_indent_count(self.view.substr(current_row))
     use_spaces = settings.get('translate_tabs_to_spaces')
     indent_count = len(raw_indent)
     expected_indent_level = indent_count - 1
@@ -16,9 +16,13 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
       tab_size = settings.get('tab_size', 4)
       indent_count /= tab_size
 
-    previous_line = sublime.Region(current_row.begin() - 1)
+    previous_line = self.get_previous_row(current_row)
 
     self.report_expiring_status('message', 'Previous line: %s' % self.view.substr(self.view.line(previous_line)))
+
+    is_root = self.is_root(previous_line)
+
+    self.report_expiring_status('indent', 'This line is %sa root candidate' % ('' if is_root else 'not '))
 
     # TODO:
     # Find nearest SASS selector fragment
@@ -27,7 +31,7 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     nearest_sass_fragment = None
 
     # Traverse selector tree to root (i.e. no indent)
-    #while (is_still_searching())
+    #while (not is_root(nearest_sass_fragment))
       #current_row = get_previous_row(current_row)
       #if (is_indented_at(expected_indent_level, current_row) && is_sass_fragment(current_row))
       #  sass_fragments.push(row_at(current_row))
@@ -56,9 +60,9 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
       self.report_expiring_status('error', 'Multi-row regions are not supported', 5000)
       raise Exception('Multi-row region was selected, logic for this not yet determined')
 
-  def calculate_indent_count(self, selection):
-    text = self.view.substr(selection)
-    full_indentation = re.search('^(\s*)', text).groups()[0]
+  # Returns a string containing all the leading whitespace of a row
+  def calculate_indent_count(self, line):
+    full_indentation = re.search('^(\s*)', line).groups()[0]
 
     return full_indentation
 
@@ -69,6 +73,11 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
 
     return self.view.line(one_char_before)
 
+  # Determines if a region has no indentation (i.e. it is a 'root' selector)
+  def is_root(self, row):
+    return len(self.calculate_indent_count(row)) == 0
+
+  # Quick debugging logger
   def report_expiring_status(self, status_key, status_message, timeout=3000):
     self.view.set_status(status_key, status_message)
     sublime.set_timeout(lambda: self.view.erase_status(status_key), timeout)
