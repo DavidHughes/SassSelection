@@ -6,7 +6,7 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     settings  = self.view.settings()
     (current_row, current_row_index) = self.validate_selection()
-    raw_indent = self.calculate_indent_count(self.view.substr(current_row))
+    raw_indent = self.get_indentation(self.view.substr(current_row))
     use_spaces = settings.get('translate_tabs_to_spaces')
     indent_count = len(raw_indent)
     expected_indent_level = indent_count - 1
@@ -46,8 +46,10 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
   # Returns first selection region if it covers only one row
   def validate_selection(self):
     all_selections = self.view.sel()
-    if len(all_selections) != 1:
-      self.report_expiring_message('warning', 'Multiple regions selected, using first')
+    if len(all_selections) > 1:
+      self.report_expiring_status('warning', 'Multiple regions selected, using first')
+    elif len(all_selections) == 0:
+      raise RuntimeError("Nothing is selected")
 
     current_row = self.view.line(all_selections[0])
 
@@ -58,24 +60,24 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
       return (current_row, begin_row)
     else:
       self.report_expiring_status('error', 'Multi-row regions are not supported', 5000)
-      raise Exception('Multi-row region was selected, logic for this not yet determined')
+      raise NotImplementedError('Multi-row region was selected, logic for this not yet determined')
 
   # Returns a string containing all the leading whitespace of a row
-  def calculate_indent_count(self, line):
+  def get_indentation(self, line):
     full_indentation = re.search('^(\s*)', line).groups()[0]
 
     return full_indentation
 
   # Gets the region for the line before the current line.
-  # This works by getting the region of the point BEFORE the current line begins (i.e. the previous line)
-  def get_previous_row(self, current_row):
-    one_char_before = sublime.Region(current_row.begin() - 1)
+  # @line_region - The region for the entire current row
+  def get_previous_row(self, line_region):
+    one_char_before = sublime.Region(line_region.begin() - 1)
 
     return self.view.line(one_char_before)
 
   # Determines if a region has no indentation (i.e. it is a 'root' selector)
   def is_root(self, row):
-    return len(self.calculate_indent_count(row)) == 0
+    return len(self.get_indentation(row)) == 0
 
   # Quick debugging logger
   def report_expiring_status(self, status_key, status_message, timeout=3000):
