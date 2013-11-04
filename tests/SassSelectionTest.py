@@ -72,3 +72,23 @@ class Test_SassSelectionCommand(BufferTest):
       exception_thrown = True
 
     self.assertTrue(exception_thrown, 'Expected a RuntimeError')
+
+
+  #  The test_find_sass_fragments_X test methods all test the to-be-implemented find_sass_fragments methods
+  #  They collectively will cover the four basic situations I've thought of:
+  #   | #id              <- _base
+  #   |   attr: value    <- _base_declaration
+  #   |   .class         <- _nested
+  #   |     attr: value  <- _nested_declaration
+
+  def test_find_sass_fragments_base(self):
+    raise NotImplementedError
+
+  def test_find_sass_fragments_base_declaration(self):
+    raise NotImplementedError
+
+  def test_find_sass_fragments_nested(self):
+    raise NotImplementedError
+
+  def test_find_sass_fragments_nested_declaration(self):
+    raise NotImplementedError
