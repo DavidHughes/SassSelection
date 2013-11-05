@@ -25,22 +25,8 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     self.report_expiring_status('indent', 'This line is %sa root candidate' % ('' if is_root else 'not '))
 
     # TODO:
-    # Find nearest SASS selector fragment
-
-    # Implementation placeholder
-    nearest_sass_fragment = None
-
-    # Traverse selector tree to root (i.e. no indent)
-    #while (not is_root(nearest_sass_fragment))
-      #current_row = get_previous_row(current_row)
-      #if (is_indented_at(expected_indent_level, current_row) && is_sass_fragment(current_row))
-      #  sass_fragments.push(row_at(current_row))
-
-
-    # 'Compile' selector to true CSS
-    #for (i = len(sass_fragments); i > 0; i--)
-    #  computed_css = sass_fragments.pop();
-    #  flatten_sass_syntax(computed_css);
+    # - Gather SASS fragments
+    # - 'Compile' selector to true CSS
 
 
   # Returns first selection region if it covers only one row
@@ -78,6 +64,31 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
   # Determines if a region has no indentation (i.e. it is a 'root' selector)
   def is_root(self, row):
     return len(self.get_indentation(row)) == 0
+
+  def is_like_sass(self, candidate):
+    selector_pattern = '([#\.][\w\d\-%]+)+'
+
+    return (re.search(selector_pattern, candidate) != None)
+
+  def find_nearest_sass_fragment(self, region):
+    inspected_line = self.view.line(region)
+
+    if (is_like_sass(contents_of(inspected_line))):
+      if (is_root(contents_of(inspected_line))):
+        return contents_of(inspected_line)
+      else
+        inspected_line = get_previous_row(inspected_line)
+
+    while (is_like_sass(contents_of(inspected_line)) == False):
+      inspected_line = get_previous_row(inspected_line)
+
+    return inspected_line
+
+  def contents_of(region):
+    return self.view.substr(region)
+
+  def find_sass_fragments(self):
+    raise NotImplementedError
 
   # Quick debugging logger
   def report_expiring_status(self, status_key, status_message, timeout=3000):
