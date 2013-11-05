@@ -7,7 +7,14 @@ from ..SassSelection import SassSelectionCommand
 class Test_SassSelectionCommand(BufferTest):
   text = ['#selector', '  width: 100%', '  &.disabled', '    color: #666666']
   compiled_css = ['#selector', '#selector.disabled']
+
+  # TODO: Sort out inheritance/construction of SassSelectionCommand so this is redundant
   report_expiring_status = (lambda self, status, msg, timeout=3000: "OK")
+  is_like_sass     = SassSelectionCommand.is_like_sass
+  contents_of      = SassSelectionCommand.contents_of
+  get_previous_row = SassSelectionCommand.get_previous_row
+  is_root          = SassSelectionCommand.is_root
+  get_indentation  = SassSelectionCommand.get_indentation
 
   def test_get_indentation(self):
     indent = SassSelectionCommand.get_indentation(self, self.text[0])
@@ -29,6 +36,7 @@ class Test_SassSelectionCommand(BufferTest):
     self.set_text('\n'.join(self.text))
     region = self.R(0, 0)
     self.add_sel(region)
+
     expected_row_region = Region(0, len(self.text[0]))
     expected_row_index = 0
     (actual_row_region, actual_row_index) = SassSelectionCommand.validate_selection(self)
@@ -101,7 +109,7 @@ class Test_SassSelectionCommand(BufferTest):
     self.add_sel(region)
 
     actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, region)
-    assertEqual(actual_nearest_sass, text[0])
+    self.assertEqual(actual_nearest_sass, self.text[0])
 
   def test_find_nearest_sass_fragment_from_attr_declaration(self):
     self.set_text('\n'.join(self.text))
@@ -109,7 +117,7 @@ class Test_SassSelectionCommand(BufferTest):
     self.add_sel(region)
 
     actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, region)
-    assertEqual(actual_nearest_sass, text[0])
+    self.assertEqual(actual_nearest_sass, self.text[0])
 
   def test_find_nearest_sass_fragment_from_nested_selector(self):
     self.set_text('\n'.join(self.text))
@@ -117,7 +125,7 @@ class Test_SassSelectionCommand(BufferTest):
     self.add_sel(region)
 
     actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, region)
-    assertEqual(actual_nearest_sass, text[0])
+    self.assertEqual(actual_nearest_sass, self.text[0])
 
   def test_find_sass_fragments_base(self):
     self.set_text('\n'.join(self.text))
@@ -125,8 +133,8 @@ class Test_SassSelectionCommand(BufferTest):
     self.add_sel(region)
 
     sass_fragments = SassSelectionCommand.find_sass_fragments(self)
-    assertEqual(len(sass_fragments), 1)
-    assertEqual(sass_fragmnets[0], text[0])
+    self.assertEqual(len(sass_fragments), 1)
+    self.assertEqual(sass_fragmnets[0], self.text[0])
 
   def test_find_sass_fragments_base_declaration(self):
     self.set_text('\n'.join(self.text))

@@ -73,18 +73,18 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
   def find_nearest_sass_fragment(self, region):
     inspected_line = self.view.line(region)
 
-    if (is_like_sass(contents_of(inspected_line))):
-      if (is_root(contents_of(inspected_line))):
-        return contents_of(inspected_line)
-      else
+    if (self.is_like_sass(self.contents_of(inspected_line))):
+      if (self.is_root(self.contents_of(inspected_line))):
+        return self.contents_of(inspected_line)
+      else:
         inspected_line = get_previous_row(inspected_line)
 
-    while (is_like_sass(contents_of(inspected_line)) == False):
-      inspected_line = get_previous_row(inspected_line)
+    while (self.is_like_sass(self.contents_of(inspected_line)) == False):
+      inspected_line = self.get_previous_row(inspected_line)
 
     return inspected_line
 
-  def contents_of(region):
+  def contents_of(self, region):
     return self.view.substr(region)
 
   def find_sass_fragments(self):
