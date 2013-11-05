@@ -140,15 +140,27 @@ class Test_SassSelectionCommand(BufferTest):
 
     sass_fragments = SassSelectionCommand.collect_sass_fragments(self, self.R(row, col))
     self.assertEqual(len(sass_fragments), 1)
-    self.assertEqual(sass_fragments[0], self.text[0])
+    self.assertEqual(sass_fragments[0].strip(), self.text[0].strip())
 
   def test_collect_sass_fragments_nested(self):
-    self.set_text('\n'.join(self.text))
-    raise NotImplementedError
+    row = 2
+    col = 0
+    self.initialise_with_region(row, col)
+
+    sass_fragments = SassSelectionCommand.collect_sass_fragments(self, self.R(row, col))
+    self.assertEqual(len(sass_fragments), 2)
+    self.assertEqual(sass_fragments[0].strip(), self.text[0].strip())
+    self.assertEqual(sass_fragments[1].strip(), self.text[1].strip())
 
   def test_collect_sass_fragments_nested_declaration(self):
-    self.set_text('\n'.join(self.text))
-    raise NotImplementedError
+    row = 3
+    col = 0
+    self.initialise_with_region(row, col)
+
+    sass_fragments = SassSelectionCommand.collect_sass_fragments(self, self.R(row, col))
+    self.assertEqual(len(sass_fragments), 2)
+    self.assertEqual(sass_fragments[0].strip(), self.text[0].strip())
+    self.assertEqual(sass_fragments[1].strip(), self.text[1].strip())
 
   def initialise(self):
     self.set_text('\n'.join(self.text))
