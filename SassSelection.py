@@ -84,11 +84,17 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
 
     return inspected_line
 
+  def collect_sass_fragments(self, region):
+    sass_fragments = []
+
+    lowest_fragment = self.find_nearest_sass_fragment(region)
+
+    sass_fragments.append(lowest_fragment)
+
+    return sass_fragments
+
   def contents_of(self, region):
     return self.view.substr(region)
-
-  def find_sass_fragments(self):
-    raise NotImplementedError
 
   # Quick debugging logger
   def report_expiring_status(self, status_key, status_message, timeout=3000):

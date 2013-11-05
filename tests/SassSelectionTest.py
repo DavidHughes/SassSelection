@@ -15,6 +15,7 @@ class Test_SassSelectionCommand(BufferTest):
   get_previous_row = SassSelectionCommand.get_previous_row
   is_root          = SassSelectionCommand.is_root
   get_indentation  = SassSelectionCommand.get_indentation
+  find_nearest_sass_fragment = SassSelectionCommand.find_nearest_sass_fragment
 
   def test_get_indentation(self):
     indent = SassSelectionCommand.get_indentation(self, self.text[0])
@@ -33,9 +34,9 @@ class Test_SassSelectionCommand(BufferTest):
 
   # Tests against a simple one-point selection on the first row
   def test_validate_selection_basic(self):
-    self.set_text('\n'.join(self.text))
-    region = self.R(0, 0)
-    self.add_sel(region)
+    row = 0
+    col = 0
+    self.initialise_with_region(row, col)
 
     expected_row_region = Region(0, len(self.text[0]))
     expected_row_index = 0
@@ -46,11 +47,7 @@ class Test_SassSelectionCommand(BufferTest):
   # Tests against multiple selected regions.
   # Expected: function uses first region
   def test_validate_selection_multiregion(self):
-    self.set_text('\n'.join(self.text))
-    regions = [self.R(0, 0), self.R(1, 0)]
-
-    for region in regions:
-      self.add_sel(region)
+    self.initialise_with_regions([self.R(0, 0), self.R(1, 0)])
 
     expected_row_region = Region(0, len(self.text[0]))
     expected_row_index = 0
@@ -104,46 +101,58 @@ class Test_SassSelectionCommand(BufferTest):
   #   |     attr: value  <- _nested_declaration
 
   def test_find_nearest_sass_fragment_from_root_selector(self):
-    self.set_text('\n'.join(self.text))
-    region = self.R(0, 0)
-    self.add_sel(region)
+    row = 0
+    col = 0
+    self.initialise_with_region(row, col)
 
-    actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, region)
+    actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, self.R(row, col))
     self.assertEqual(actual_nearest_sass, self.text[0])
 
   def test_find_nearest_sass_fragment_from_attr_declaration(self):
-    self.set_text('\n'.join(self.text))
-    region = self.R(1, 0)
-    self.add_sel(region)
+    row = 1
+    col = 0
+    self.initialise_with_region(row, col)
 
-    actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, region)
+    actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, self.R(row, col))
     self.assertEqual(actual_nearest_sass, self.text[0])
 
   def test_find_nearest_sass_fragment_from_nested_selector(self):
-    self.set_text('\n'.join(self.text))
-    region = self.R(2, 0)
-    self.add_sel(region)
+    row = 2
+    col = 0
+    self.initialise_with_region(row, col)
 
-    actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, region)
+    actual_nearest_sass = SassSelectionCommand.find_nearest_sass_fragment(self, self.R(row, col))
     self.assertEqual(actual_nearest_sass, self.text[0])
 
-  def test_find_sass_fragments_base(self):
-    self.set_text('\n'.join(self.text))
-    region = self.R(0, 0)
-    self.add_sel(region)
+  def test_collect_sass_fragments_base(self):
+    row = 0
+    col = 0
+    self.initialise_with_region(row, col)
 
-    sass_fragments = SassSelectionCommand.find_sass_fragments(self)
+    sass_fragments = SassSelectionCommand.collect_sass_fragments(self, self.R(row, col))
     self.assertEqual(len(sass_fragments), 1)
-    self.assertEqual(sass_fragmnets[0], self.text[0])
+    self.assertEqual(sass_fragments[0], self.text[0])
 
-  def test_find_sass_fragments_base_declaration(self):
+  def test_collect_sass_fragments_base_declaration(self):
+    self.set_text('\n'.join(self.text))
+    region
+
+  def test_collect_sass_fragments_nested(self):
     self.set_text('\n'.join(self.text))
     raise NotImplementedError
 
-  def test_find_sass_fragments_nested(self):
+  def test_collect_sass_fragments_nested_declaration(self):
     self.set_text('\n'.join(self.text))
     raise NotImplementedError
 
-  def test_find_sass_fragments_nested_declaration(self):
+  def initialise(self):
     self.set_text('\n'.join(self.text))
-    raise NotImplementedError
+
+  def initialise_with_region(self, row, col):
+    self.initialise_with_regions([self.R(row, col)])
+
+  def initialise_with_regions(self, regions):
+    self.initialise()
+
+    for region in regions:
+      self.add_sel(region)
