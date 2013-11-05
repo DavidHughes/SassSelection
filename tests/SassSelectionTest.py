@@ -134,8 +134,13 @@ class Test_SassSelectionCommand(BufferTest):
     self.assertEqual(sass_fragments[0], self.text[0])
 
   def test_collect_sass_fragments_base_declaration(self):
-    self.set_text('\n'.join(self.text))
-    region
+    row = 1
+    col = 0
+    self.initialise_with_region(row, col)
+
+    sass_fragments = SassSelectionCommand.collect_sass_fragments(self, self.R(row, col))
+    self.assertEqual(len(sass_fragments), 1)
+    self.assertEqual(sass_fragments[0], self.text[0])
 
   def test_collect_sass_fragments_nested(self):
     self.set_text('\n'.join(self.text))
