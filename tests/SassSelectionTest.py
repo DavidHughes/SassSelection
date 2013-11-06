@@ -70,6 +70,17 @@ class Test_SassSelectionCommand(BufferTest):
 
     self.assertTrue(exception_thrown, 'Expected a NotImplementedError')
 
+  def test_validate_selection_no_sel(self):
+    self.set_text('\n'.join(self.text))
+
+    exception_thrown = False
+    try:
+      SassSelectionCommand.validate_selection(self)
+    except RuntimeError:
+      exception_thrown = True
+
+    self.assertTrue(exception_thrown, 'Expected a RuntimeError')
+
   def test_is_like_sass_simple_id(self):
     copy = self.text[0]
 
@@ -94,16 +105,6 @@ class Test_SassSelectionCommand(BufferTest):
     is_like_sass = SassSelectionCommand.is_like_sass(self, copy)
     self.assertFalse(is_like_sass)
 
-  def test_validate_selection_no_sel(self):
-    self.set_text('\n'.join(self.text))
-
-    exception_thrown = False
-    try:
-      SassSelectionCommand.validate_selection(self)
-    except RuntimeError:
-      exception_thrown = True
-
-    self.assertTrue(exception_thrown, 'Expected a RuntimeError')
 
   #   | #id              <- _base
   #   |   attr: value    <- _base_declaration
