@@ -18,6 +18,9 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
 
     previous_line = self.get_previous_row(current_row)
 
+    if (previous_line == None):
+      self.handle_malformed_sass()
+
     self.report_expiring_status('message', 'Previous line: %s' % self.view.substr(self.view.line(previous_line)))
 
     is_root = self.is_root(previous_line)
@@ -27,7 +30,6 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
     # TODO:
     # - Gather SASS fragments
     # - 'Compile' selector to true CSS
-
 
   # Returns first selection region if it covers only one row
   def validate_selection(self):
@@ -49,21 +51,39 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
       raise NotImplementedError('Multi-row region was selected, logic for this not yet determined')
 
   # Returns a string containing all the leading whitespace of a row
-  def get_indentation(self, line):
+  def get_indentation(self, line_region):
+    line = self.contents_of(line_region)
     full_indentation = re.search('^(\s*)', line).groups()[0]
 
     return full_indentation
 
+  # Returns the amount of times the line has been "tabbed"
+  def get_logical_indent(self, line_region):
+    settings = self.view.settings()
+    inspected_line = self.view.line(line_region)
+    current_raw_indentation = self.get_indentation(inspected_line)
+    use_spaces = settings.get('translate_tabs_to_spaces')
+
+    indent_level = len(current_raw_indentation)
+    if (use_spaces):
+      indent_level /= settings.get('tab_size', 4)
+
+    return indent_level
+
   # Gets the region for the line before the current line.
   # @line_region - The region for the entire current row
   def get_previous_row(self, line_region):
-    one_char_before = sublime.Region(line_region.begin() - 1)
+    region_start = line_region.begin()
 
-    return self.view.line(one_char_before)
+    if (region_start > 0):
+      one_char_before = sublime.Region(line_region.begin() - 1)
+      return self.view.line(one_char_before)
+    else:
+      return None
 
   # Determines if a region has no indentation (i.e. it is a 'root' selector)
-  def is_root(self, row):
-    return len(self.get_indentation(row)) == 0
+  def is_root(self, line_region):
+    return len(self.get_indentation(line_region)) == 0
 
   def is_like_sass(self, candidate):
     selector_pattern = '([#\.][\w\d\-%]+)+'
@@ -87,29 +107,44 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
 
   def find_nearest_sass_fragment(self, region):
     inspected_line = self.view.line(region)
+    current_indent_level = self.get_logical_indent(inspected_line)
+    parent_indent_level = current_indent_level - 1
 
-    if (self.is_like_sass(self.contents_of(inspected_line))):
-      if (self.is_root(self.contents_of(inspected_line))):
-        return self.contents_of(inspected_line)
-      else:
-        inspected_line = get_previous_row(inspected_line)
+    if (self.is_root(inspected_line)):
+      if (not self.is_like_sass(self.contents_of(inspected_line))):
+        self.handle_malformed_sass()
+      return None
 
-    while (self.is_like_sass(self.contents_of(inspected_line)) == False):
+    inspected_line = self.get_previous_row(inspected_line)
+    while (self.get_logical_indent(inspected_line) != parent_indent_level):
       inspected_line = self.get_previous_row(inspected_line)
+
+    if (inspected_line == None or self.is_like_sass(self.contents_of(inspected_line)) == False):
+      self.handle_malformed_sass()
+      return None
 
     return inspected_line
 
-  def collect_sass_fragments(self, region):
+  def collect_sass_fragments(self, selected_region):
     sass_fragments = []
 
-    lowest_fragment = self.find_nearest_sass_fragment(region)
+    if (self.is_like_sass(self.contents_of(selected_region))):
+      sass_fragments.append(self.contents_of(selected_region))
 
-    sass_fragments.append(lowest_fragment)
+    nearest_fragment_region = self.find_nearest_sass_fragment(selected_region)
+
+    while (nearest_fragment_region != None):
+      sass_fragments.append(self.contents_of(nearest_fragment_region))
+      nearest_fragment_region = self.find_nearest_sass_fragment(nearest_fragment_region)
+
 
     return sass_fragments
 
   def contents_of(self, region):
     return self.view.substr(region)
+
+  def handle_malformed_sass(self):
+    raise RuntimeError("Malformed SASS is in place, attributes are being declared where they shouldn't be")
 
   # Quick debugging logger
   def report_expiring_status(self, status_key, status_message, timeout=3000):
