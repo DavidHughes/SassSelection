@@ -93,8 +93,6 @@ class Test_SassSelectionCommand(BufferTest):
 
     self.assertTrue(exception_thrown, 'Expected a RuntimeError')
 
-  #  The test_find_sass_fragments_X test methods all test the to-be-implemented find_sass_fragments methods
-  #  They collectively will cover the four basic situations I've thought of:
   #   | #id              <- _base
   #   |   attr: value    <- _base_declaration
   #   |   .class         <- _nested
@@ -161,6 +159,8 @@ class Test_SassSelectionCommand(BufferTest):
     self.assertEqual(len(sass_fragments), 2)
     self.assertEqual(sass_fragments[0].strip(), self.text[0].strip())
     self.assertEqual(sass_fragments[1].strip(), self.text[1].strip())
+
+  # Utility methods
 
   def initialise(self):
     self.set_text('\n'.join(self.text))
