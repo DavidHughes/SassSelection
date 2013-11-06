@@ -70,14 +70,26 @@ class Test_SassSelectionCommand(BufferTest):
 
     self.assertTrue(exception_thrown, 'Expected a NotImplementedError')
 
-  def test_is_like_sass_actual_sass(self):
+  def test_is_like_sass_simple_id(self):
     copy = self.text[0]
+
+    is_like_sass = SassSelectionCommand.is_like_sass(self, copy)
+    self.assertTrue(is_like_sass)
+
+  def test_is_like_sass_simple_class(self):
+    copy = self.text[2]
 
     is_like_sass = SassSelectionCommand.is_like_sass(self, copy)
     self.assertTrue(is_like_sass)
 
   def test_is_like_sass_attr_declaration(self):
     copy = self.text[1]
+
+    is_like_sass = SassSelectionCommand.is_like_sass(self, copy)
+    self.assertFalse(is_like_sass)
+
+  def test_is_like_sass_hexcode_in_property(self):
+    copy = self.text[3]
 
     is_like_sass = SassSelectionCommand.is_like_sass(self, copy)
     self.assertFalse(is_like_sass)

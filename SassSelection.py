@@ -68,6 +68,21 @@ class SassSelectionCommand(sublime_plugin.TextCommand):
   def is_like_sass(self, candidate):
     selector_pattern = '([#\.][\w\d\-%]+)+'
 
+    exceptions = [
+      'color:',
+      'background-color:',
+      'background:',
+      'outline-color:',
+      'outline:',
+      'text-shadow:',
+      'box-shadow'
+      ]
+
+    for exception in exceptions:
+      is_property = re.search(exception, candidate)
+      if (is_property):
+        return False
+
     return (re.search(selector_pattern, candidate) != None)
 
   def find_nearest_sass_fragment(self, region):
